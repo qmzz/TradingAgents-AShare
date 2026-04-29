@@ -1810,7 +1810,10 @@ async def _run_job_inner(
                     _log(f"Horizon '{request.horizons[i]}' failed: {r}")
                     horizon_errors.append(f"{request.horizons[i]}: {r}")
             if horizon_errors:
-                raise RuntimeError(f"Horizon analysis failed: {'; '.join(horizon_errors)}")
+                # 如果所有周期都失败才终止；部分失败时继续用成功周期的结果
+                if len(horizon_errors) == len(request.horizons):
+                    raise RuntimeError(f"所有分析周期均失败: {'; '.join(horizon_errors)}")
+                _log(f"[Warning] 部分周期失败但继续: {'; '.join(horizon_errors)}")
 
             short_r = graph._build_horizon_result("short", horizon_states.get("short") or {})
             medium_r = graph._build_horizon_result("medium", horizon_states.get("medium") or {})

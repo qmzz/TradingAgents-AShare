@@ -86,12 +86,13 @@ class OpenAIClient(BaseLLMClient):
         if not UnifiedChatOpenAI._is_reasoning_model(self.model):
             llm_kwargs["temperature"] = self.kwargs.get("temperature", 0)
 
-        # ── 极致稳定性配置 ──
-        # 1. 禁用一切重试：避免 Thinking 模型重复扣费或因重连导致的状态丢失
+        # ── 稳定性配置 ──
+        # 1. 禁用 LangChain 内置重试：由上层 agent 节点统一控制重试策略
         llm_kwargs["max_retries"] = 0
-        
-        # 2. 超长超时：默认 300 秒，给足推理模型思考时间
-        llm_kwargs["timeout"] = self.kwargs.get("timeout", 300.0)
+
+        # 2. LLM 客户端超时：默认 180 秒（给足推理模型思考时间），可通过 TA_LLM_TIMEOUT 覆盖
+        #    配合上层 agent 级重试机制使用：客户端超时 → agent 层判断是否可重试 → 指数退避重试
+        llm_kwargs["timeout"] = self.kwargs.get("timeout", int(os.environ.get("TA_LLM_TIMEOUT", "180")))
         
         target_url = self.base_url or "https://api.openai.com/v1"
         if self.provider == "xai": target_url = "https://api.x.ai/v1"
