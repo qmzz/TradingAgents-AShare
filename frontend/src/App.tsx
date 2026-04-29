@@ -14,7 +14,7 @@ import Sponsor from './pages/Sponsor'
 import Thanks from './pages/Thanks'
 import { useAuthStore } from './stores/authStore'
 
-const ONLINE_HOST = 'app.510168.xyz'
+const ONLINE_HOST = 'b.cmkk.fun'
 const isOnline = typeof window !== 'undefined' && window.location.hostname === ONLINE_HOST
 
 function ExternalRedirect({ to, fallback }: { to: string; fallback: JSX.Element }) {
