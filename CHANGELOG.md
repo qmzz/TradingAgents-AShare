@@ -2,26 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.8.3] - 2026-04-28
-
-### Fixed
-- **辩论弹框深色背景文字颜色修复**：修复多空辩论和风控辩论弹框中 Markdown 文字颜色与深色背景融合的问题
-  - `frontend/src/components/DebateDrawer.tsx`：容器添加 `dark` class 激活 Tailwind 暗色模式
-  - `frontend/src/components/DebateTimeline.tsx`：Markdown 内容显式设置 `text-slate-200` 浅色文字
-  - 根因：`@tailwindcss/typography` 未安装，`prose/dark:prose-invert` 类不生效
-
-## [v0.8.2] - 2026-04-26
-
-### Fixed
-- **前端 API 地址动态获取**：修复前端 API 地址硬编码 `localhost:8000` 的问题
-  - `frontend/src/services/api.ts`：API 基础地址改为跟随 `window.location.origin` 动态获取
-  - 删除 `frontend/.env.local` 硬编码配置
-  - 效果：无论通过域名、IP、反代访问，前端都能正确连接后端 API
-- **智能分析超时优化**：修复多 Agent 协作分析流程超时问题
-  - `api/main.py`：将 `_JOB_TIMEOUT` 默认值从 `600` 提升至 `1800`（30 分钟）
-  - 效果：完整的多 Agent 分析流程（7 个分析师 + 多空辩论 + 风控辩论 + Trader 决策）可正常完成
-
-## [v0.8.1] - 2026-04-28
+## [v0.8.4] - 2026-04-28
 
 ### Added
 - **Agent 级重试机制**：为所有 Agent 节点添加自动重试功能
@@ -46,6 +27,25 @@ All notable changes to this project will be documented in this file.
 - **5 分钟超时拖垮分析流程**：修复 LLM 客户端默认 300 秒超时导致单个 Agent 卡死时整个分析任务失败的问题
 - **单 Agent 失败导致全任务失败**：修复 LangGraph 图执行中任一节点异常直接崩溃的问题
 - **周期级失败无容错**：修复任一周期的分析失败直接终止整个任务的缺陷
+
+## [v0.8.3] - 2026-04-28
+
+### Fixed
+- **辩论弹框深色背景文字颜色修复**：修复多空辩论和风控辩论弹框中 Markdown 文字颜色与深色背景融合的问题
+  - `frontend/src/components/DebateDrawer.tsx`：容器添加 `dark` class 激活 Tailwind 暗色模式
+  - `frontend/src/components/DebateTimeline.tsx`：Markdown 内容显式设置 `text-slate-200` 浅色文字
+  - 根因：`@tailwindcss/typography` 未安装，`prose/dark:prose-invert` 类不生效
+
+## [v0.8.2] - 2026-04-26
+
+### Fixed
+- **前端 API 地址动态获取**：修复前端 API 地址硬编码 `localhost:8000` 的问题
+  - `frontend/src/services/api.ts`：API 基础地址改为跟随 `window.location.origin` 动态获取
+  - 删除 `frontend/.env.local` 硬编码配置
+  - 效果：无论通过域名、IP、反代访问，前端都能正确连接后端 API
+- **智能分析超时优化**：修复多 Agent 协作分析流程超时问题
+  - `api/main.py`：将 `_JOB_TIMEOUT` 默认值从 `600` 提升至 `1800`（30 分钟）
+  - 效果：完整的多 Agent 分析流程（7 个分析师 + 多空辩论 + 风控辩论 + Trader 决策）可正常完成
 
 ## [v0.5.0] - 2026-03-22
 
