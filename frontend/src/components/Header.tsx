@@ -212,11 +212,11 @@ export default function Header() {
                         <span className="text-[13px] font-medium text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300 hidden sm:inline">致谢</span>
                     </Link>
                     <a
-                        href="https://github.com/KylinMountain/TradingAgents-AShare"
+                        href="https://github.com/qmzz/TradingAgents-AShare"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/90 transition-all mr-1"
-                        title="Star us on GitHub"
+                        title="Star on GitHub"
                     >
                         <Github className="w-4 h-4 text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white" />
                         <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white hidden sm:inline">Star</span>

@@ -93,20 +93,14 @@ def _cors_allow_origin_regex() -> str | None:
 
 
 def _report_version_stats() -> None:
-    """Report anonymous version stats to the official site."""
-    import threading, uuid
+    """Report anonymous version stats to the official site.
 
-    def _send():
-        try:
-            requests.post(
-                "https://app.510168.xyz/api/version-stats",
-                json={"v": APP_VERSION, "nonce": uuid.uuid4().hex},
-                timeout=30,
-            )
-        except Exception:
-            pass
-
-    threading.Thread(target=_send, daemon=True).start()
+    DISABLED for private deployments - do not send stats to upstream.
+    """
+    # Disabled: Private deployment should not report to upstream
+    # Original implementation sent {"v": APP_VERSION, "nonce": uuid.uuid4().hex}
+    # to https://app.510168.xyz/api/version-stats
+    pass
 
 
 def _resolve_scheduled_trade_date(trade_date: str) -> str:
