@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+import json
+import logging
 import re
 from datetime import date, datetime, time
 from functools import lru_cache
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 
 CN_TZ = ZoneInfo("Asia/Shanghai")
+
+# 交易日历缓存文件路径（避免每次启动都网络请求）
+TRADE_DATES_CACHE_FILE = Path("/app/data/trade_dates_cache.json")
 
 
 def now_cn() -> datetime:
@@ -22,21 +28,70 @@ def _parse_date(date_str: str) -> date:
     return datetime.strptime(date_str, "%Y-%m-%d").date()
 
 
+def _save_trade_dates_cache(dates: list[date]) -> None:
+    """保存交易日历到缓存文件"""
+    try:
+        TRADE_DATES_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(TRADE_DATES_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump([d.strftime("%Y-%m-%d") for d in dates], f)
+    except Exception as e:
+        logging.warning(f"保存交易日历缓存失败：{e}")
+
+
+def _load_trade_dates_cache() -> list[date] | None:
+    """从缓存文件加载交易日历"""
+    try:
+        if TRADE_DATES_CACHE_FILE.exists():
+            with open(TRADE_DATES_CACHE_FILE, "r", encoding="utf-8") as f:
+                dates_str = json.load(f)
+            return [datetime.strptime(d, "%Y-%m-%d").date() for d in dates_str]
+    except Exception as e:
+        logging.warning(f"加载交易日历缓存失败：{e}")
+    return None
+
+
 @lru_cache(maxsize=1)
 def _load_cn_trade_dates() -> tuple[list[date], set[date]]:
+    # 1. 先尝试从缓存文件加载（秒开）
+    cached = _load_trade_dates_cache()
+    if cached:
+        return cached, set(cached)
+    
+    # 2. 缓存失效，从网络获取（带超时保护）
     try:
         import akshare as ak  # type: ignore
-
-        df = ak.tool_trade_date_hist_sina()
+        
+        # 设置 10 秒超时保护
+        import signal
+        
+        def _timeout_handler(signum, frame):
+            raise TimeoutError("获取交易日历超时（10 秒）")
+        
+        signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(10)
+        
+        try:
+            df = ak.tool_trade_date_hist_sina()
+        finally:
+            signal.alarm(0)  # 取消超时
+        
         if df is None or df.empty or "trade_date" not in df.columns:
             raise ValueError("empty trade date table")
+        
         dates = sorted(
             pd_dt.date()
             for pd_dt in pd.to_datetime(df["trade_date"], errors="coerce")
             if str(pd_dt) != "NaT"
         )
+        
+        # 保存到缓存
+        _save_trade_dates_cache(dates)
+        
         return dates, set(dates)
-    except Exception:
+    
+    except Exception as e:
+        # 记录日志但不阻塞启动
+        logging.warning(f"加载交易日历失败，使用周末规则降级：{e}")
         # Fallback: no holiday calendar, only weekend rule.
         return [], set()
 
