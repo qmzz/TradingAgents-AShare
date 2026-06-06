@@ -221,9 +221,7 @@ export function useSSE(jobId: string | null) {
 
             // Auto reconnect after 3 seconds
             setTimeout(() => {
-                if (eventSourceRef.current?.readyState === EventSource.CLOSED) {
-                    connect()
-                }
+                if (!eventSourceRef.current) connect()
             }, 3000)
         }
 
@@ -235,11 +233,12 @@ export function useSSE(jobId: string | null) {
     }, [jobId])
 
     useEffect(() => {
+        if (!jobId) return
         const cleanup = connect()
         return () => {
             cleanup?.()
         }
-    }, [connect])
+    }, [jobId, connect])
 
     const disconnect = useCallback(() => {
         if (eventSourceRef.current) {

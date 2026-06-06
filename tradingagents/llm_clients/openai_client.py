@@ -88,7 +88,7 @@ class OpenAIClient(BaseLLMClient):
 
         # ── 极致稳定性配置 ──
         # 1. 禁用一切重试：避免 Thinking 模型重复扣费或因重连导致的状态丢失
-        llm_kwargs["max_retries"] = 0
+        llm_kwargs["max_retries"] = 2
         
         # 2. 超长超时：默认 300 秒，给足推理模型思考时间
         llm_kwargs["timeout"] = self.kwargs.get("timeout", 300.0)
@@ -98,7 +98,7 @@ class OpenAIClient(BaseLLMClient):
         elif self.provider == "openrouter": target_url = "https://openrouter.ai/api/v1"
         elif self.provider == "ollama": target_url = "http://localhost:11434/v1"
         
-        print(f"[LLM Client] Init {self.provider} ({self.model}) at {target_url} (Retries=0, Timeout={llm_kwargs['timeout']}s)")
+        _logger.info("[LLM Client] Init %s (%s) at %s (Retries=2)", self.provider, self.model, target_url)
 
         if self.provider == "xai":
             llm_kwargs["base_url"] = "https://api.x.ai/v1"

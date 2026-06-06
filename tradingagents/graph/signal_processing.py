@@ -29,7 +29,7 @@ class SignalProcessor:
             return "HOLD"
 
         decision = _extract_decision_keyword(full_signal)
-        if decision:
+        if decision in ("BUY", "SELL", "HOLD"):
             return decision
 
         messages = [

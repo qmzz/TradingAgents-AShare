@@ -12,45 +12,20 @@ class ConditionalLogic:
         self.max_debate_rounds = max_debate_rounds
         self.max_risk_discuss_rounds = max_risk_discuss_rounds
 
-    def should_continue_market(self, state: AgentState):
-        """Determine if market analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
+    @staticmethod
+    def _should_continue_tool_call(state: AgentState) -> str:
+        """Generic: continue if last message has tool calls."""
+        last_message = state["messages"][-1]
+        return "continue" if getattr(last_message, "tool_calls", None) else "done"
 
-    def should_continue_social(self, state: AgentState):
-        """Determine if social media analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
+    should_continue_market = _should_continue_tool_call
+    should_continue_social = _should_continue_tool_call
 
-    def should_continue_news(self, state: AgentState):
-        """Determine if news analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
+    should_continue_news = _should_continue_tool_call
 
-    def should_continue_fundamentals(self, state: AgentState):
-        """Determine if fundamentals analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
+    should_continue_fundamentals = _should_continue_tool_call
 
-    def should_continue_macro(self, state: AgentState):
-        """Determine if macro analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
+    should_continue_macro = _should_continue_tool_call
 
     def should_continue_smart_money(self, state: AgentState):
         """Determine if smart money analysis should continue."""

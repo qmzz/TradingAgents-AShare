@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
+import logging
 import os
 import secrets
 import smtplib
@@ -17,6 +19,8 @@ from sqlalchemy.orm import Session
 
 from api.database import EmailVerificationCodeDB, UserDB, UserLLMConfigDB
 
+
+logger = logging.getLogger(__name__)
 
 ALGORITHM = "HS256"
 
@@ -34,6 +38,7 @@ def _as_utc(value: Optional[datetime]) -> Optional[datetime]:
 
 
 _DEFAULT_SECRET = "tradingagents-ashare-dev-secret"
+_MAX_VERIFY_ATTEMPTS = 5
 
 
 def _secret_key() -> str:
@@ -159,7 +164,7 @@ def verify_login_code(db: Session, email: str, code: str, purpose: str = "login"
     expires_at = _as_utc(code_row.expires_at) if code_row else None
     if not code_row or not expires_at or expires_at < now:
         return None
-    if code_row.code_hash != hash_code(email, code):
+    if not hmac.compare_digest(code_row.code_hash or "", hash_code(email, code)):
         return None
 
     code_row.consumed_at = now
@@ -195,7 +200,7 @@ def get_env_alias(keys: list[str], default: str = "") -> str:
 def send_login_code(email: str, code: str) -> Optional[str]:
     smtp_host = get_env_alias(["MAIL_HOST", "MAIL_SERVER", "SMTP_HOST"]).strip()
     if not smtp_host:
-        print(f"[auth] login code for {email}: {code}")
+        logger.info("[auth] dev code REDACTED for %s", email)
         if os.getenv("APP_ENV", "development") != "production":
             return code
         return None
@@ -219,7 +224,7 @@ def send_login_code(email: str, code: str) -> Optional[str]:
     msg.set_content(f"你的 TradingAgents 登录验证码是：{code}\n\n10 分钟内有效。")
 
     try:
-        print(f"[auth] connecting to {smtp_host}:{smtp_port} (SSL: {smtp_ssl_tls}, STARTTLS: {smtp_starttls})")
+        logger.info("[auth] connecting to %s:%s", smtp_host, smtp_port)
         smtp_cls = smtplib.SMTP_SSL if smtp_ssl_tls else smtplib.SMTP
         with smtp_cls(smtp_host, smtp_port, timeout=20) as server:
             if smtp_starttls and not smtp_ssl_tls:
@@ -229,8 +234,8 @@ def send_login_code(email: str, code: str) -> Optional[str]:
             server.send_message(msg)
         return None
     except Exception as e:
-        print(f"[auth] failed to send email via {smtp_host}: {e}")
-        print(f"[auth] falling back to console log. code for {email}: {code}")
+        logger.warning("[auth] failed: %s", e)
+        logger.warning("[auth] fallback for %s", email)
         if os.getenv("APP_ENV", "development") != "production":
             return code
         return None

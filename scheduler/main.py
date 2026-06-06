@@ -296,7 +296,8 @@ async def _scheduler_loop():
             if not is_cn_trading_day(today):
                 continue
             time_val = now.hour * 60 + now.minute
-            if 8 * 60 < time_val < 20 * 60:
+            # Block during A-share trading session (9:15-15:10)
+            if 9 * 60 + 15 <= time_val < 15 * 60 + 10:
                 continue
 
             def _claim_pending_tasks():

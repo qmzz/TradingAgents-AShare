@@ -51,9 +51,6 @@ from .signal_processing import SignalProcessor
 class TradingAgentsGraph:
     """Main class that orchestrates the trading agents framework."""
 
-    # Class-level cache for persistence to handle concurrency
-    _shared_checkpointer = None
-
     def __init__(
         self,
         selected_analysts=["market", "social", "news", "fundamentals", "macro", "smart_money", "volume_price"],
@@ -70,11 +67,8 @@ class TradingAgentsGraph:
         # Update the interface's config
         set_config(self.config)
 
-        # Initialize persistence (Singleton Pattern for concurrency)
-        if TradingAgentsGraph._shared_checkpointer is None:
-            TradingAgentsGraph._shared_checkpointer = MemorySaver()
-        
-        self.checkpointer = TradingAgentsGraph._shared_checkpointer
+        # Per-instance checkpointer to avoid cross-user state leakage
+        self.checkpointer = MemorySaver()
 
         # Create necessary directories
         os.makedirs(
@@ -366,6 +360,7 @@ class TradingAgentsGraph:
             "macro_report": final_state.get("macro_report", ""),
             "smart_money_report": final_state.get("smart_money_report", ""),
             "volume_price_report": final_state.get("volume_price_report", ""),
+            "game_theory_report": final_state.get("game_theory_report", ""),
         }
 
     @staticmethod

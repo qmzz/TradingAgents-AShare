@@ -37,7 +37,6 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_serializer
 from sqlalchemy.orm import Session
-import pandas as pd
 
 from api.database import UserDB, UserLLMConfigDB, VersionStatsDB, ReportDB, ImportedPortfolioPositionDB, FeedbackDB, SponsorDB, init_db, get_db, get_db_ctx
 from api.job_store import get_job_store as _new_job_store

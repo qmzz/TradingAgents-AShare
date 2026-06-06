@@ -13,14 +13,12 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./tradingagents.db")
 
 # Create engine
 if DATABASE_URL.startswith("sqlite"):
+    from sqlalchemy.pool import StaticPool
     engine = create_engine(
         DATABASE_URL,
         connect_args={"check_same_thread": False},
         echo=False,
-        pool_size=10,
-        max_overflow=20,
-        pool_timeout=60,
-        pool_recycle=3600,
+        poolclass=StaticPool,
     )
 
     def _can_use_wal() -> bool:
@@ -93,6 +91,7 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _ensure_report_schema()
     _ensure_user_schema()
+    logger.info('[db] Database initialized')
 
 
 def _ensure_report_schema() -> None:

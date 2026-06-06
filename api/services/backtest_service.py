@@ -18,6 +18,7 @@ from uuid import uuid4
 # ──────────────────────────────────────────────────────────────────────────────
 _backtest_jobs: Dict[str, Dict[str, Any]] = {}
 _lock = threading.Lock()
+_MAX_BACKTEST_JOBS = 50
 
 
 def _utcnow_iso() -> str:
