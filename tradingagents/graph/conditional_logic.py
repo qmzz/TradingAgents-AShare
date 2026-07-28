@@ -12,82 +12,45 @@ class ConditionalLogic:
         self.max_debate_rounds = max_debate_rounds
         self.max_risk_discuss_rounds = max_risk_discuss_rounds
 
-    def should_continue_market(self, state: AgentState):
-        """Determine if market analysis should continue."""
-        messages = state["messages"]
+    @staticmethod
+    def _should_continue_tool_call(state: AgentState) -> str:
+        """Generic: continue if last message has tool calls."""
+        messages = state.get("messages") or []
+        if not messages:
+            return "done"
         last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
+        return "continue" if getattr(last_message, "tool_calls", None) else "done"
 
-    def should_continue_social(self, state: AgentState):
-        """Determine if social media analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
-
-    def should_continue_news(self, state: AgentState):
-        """Determine if news analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
-
-    def should_continue_fundamentals(self, state: AgentState):
-        """Determine if fundamentals analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
-
-    def should_continue_macro(self, state: AgentState):
-        """Determine if macro analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
-
-    def should_continue_smart_money(self, state: AgentState):
-        """Determine if smart money analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
-
-    def should_continue_volume_price(self, state: AgentState):
-        """Determine if volume price analysis should continue."""
-        messages = state["messages"]
-        last_message = messages[-1]
-        if getattr(last_message, "tool_calls", None):
-            return "continue"
-        return "done"
+    should_continue_market = _should_continue_tool_call
+    should_continue_social = _should_continue_tool_call
+    should_continue_news = _should_continue_tool_call
+    should_continue_fundamentals = _should_continue_tool_call
+    should_continue_macro = _should_continue_tool_call
+    should_continue_smart_money = _should_continue_tool_call
+    should_continue_volume_price = _should_continue_tool_call
 
     def should_continue_debate(self, state: AgentState) -> str:
         """Determine if debate should continue."""
-
+        debate_state = state.get("investment_debate_state") or {}
         if (
-            state["investment_debate_state"]["count"] >= 2 * self.max_debate_rounds
+            safe_int(debate_state.get("count", 0), 0) >= 2 * self.max_debate_rounds
         ):  # 3 rounds of back-and-forth between 2 agents
             return "Research Manager"
-        if state["investment_debate_state"].get("current_speaker", "").startswith("Bull"):
+        if str(debate_state.get("current_speaker") or "").startswith("Bull"):
             return "Bear Researcher"
         return "Bull Researcher"
 
     def should_continue_risk_analysis(self, state: AgentState) -> str:
         """Determine if risk analysis should continue."""
+        risk_state = state.get("risk_debate_state") or {}
         if (
-            state["risk_debate_state"]["count"] >= 3 * self.max_risk_discuss_rounds
+            safe_int(risk_state.get("count", 0), 0) >= 3 * self.max_risk_discuss_rounds
         ):  # 3 rounds of back-and-forth between 3 agents
             return "Risk Judge"
-        if state["risk_debate_state"]["latest_speaker"].startswith("Aggressive"):
+        latest_speaker = str(risk_state.get("latest_speaker") or "")
+        if latest_speaker.startswith("Aggressive"):
             return "Conservative Analyst"
-        if state["risk_debate_state"]["latest_speaker"].startswith("Conservative"):
+        if latest_speaker.startswith("Conservative"):
             return "Neutral Analyst"
         return "Aggressive Analyst"
 

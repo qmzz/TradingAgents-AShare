@@ -1021,11 +1021,19 @@ class RequireUser:
     def __call__(
         self,
         credentials: Optional[HTTPAuthorizationCredentials] = Depends(_auth_scheme),
+        access_token: Optional[str] = Query(
+            None,
+            description="Bearer/API token for clients (e.g. EventSource) that cannot send Authorization headers",
+        ),
     ) -> UserDB:
-        if not credentials:
+        # EventSource cannot set Authorization headers; allow token via query.
+        token = ""
+        if credentials and credentials.credentials:
+            token = credentials.credentials.strip()
+        elif access_token:
+            token = access_token.strip()
+        if not token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="请先登录")
-
-        token = credentials.credentials
 
         with get_db_ctx() as db:
             # 1. 优先尝试 JWT (网页登录)

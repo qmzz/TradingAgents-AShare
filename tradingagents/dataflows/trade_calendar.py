@@ -24,7 +24,8 @@ def _parse_date(date_str: str) -> date:
 
 @lru_cache(maxsize=1)
 def _load_cn_trade_dates() -> tuple[list[date], set[date]]:
-    try:
+    # 10s timeout guard: a hanging akshare call must not block startup.
+    def _fetch():
         import akshare as ak  # type: ignore
 
         df = ak.tool_trade_date_hist_sina()
@@ -36,6 +37,12 @@ def _load_cn_trade_dates() -> tuple[list[date], set[date]]:
             if str(pd_dt) != "NaT"
         )
         return dates, set(dates)
+
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=1) as ex:
+            return ex.submit(_fetch).result(timeout=10)
     except Exception:
         # Fallback: no holiday calendar, only weekend rule.
         return [], set()

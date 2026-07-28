@@ -35,7 +35,16 @@ export function useSSE(jobId: string | null) {
     const connect = useCallback(() => {
         if (!jobId || eventSourceRef.current) return
 
-        const url = `${getBaseUrl()}/v1/jobs/${jobId}/events`
+        // EventSource cannot send Authorization headers; pass token via query.
+        let url = `${getBaseUrl()}/v1/jobs/${jobId}/events`
+        try {
+            const token = localStorage.getItem('ta-access-token')
+            if (token) {
+                url += `?access_token=${encodeURIComponent(token)}`
+            }
+        } catch {
+            // ignore storage access errors
+        }
         const eventSource = new EventSource(url)
         eventSourceRef.current = eventSource
 

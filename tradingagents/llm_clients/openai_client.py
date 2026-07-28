@@ -93,34 +93,44 @@ class OpenAIClient(BaseLLMClient):
         # 2. 超长超时：默认 300 秒，给足推理模型思考时间
         llm_kwargs["timeout"] = self.kwargs.get("timeout", 300.0)
         
-        target_url = self.base_url or "https://api.openai.com/v1"
-        if self.provider == "xai": target_url = "https://api.x.ai/v1"
-        elif self.provider == "openrouter": target_url = "https://openrouter.ai/api/v1"
-        elif self.provider == "ollama": target_url = "http://localhost:11434/v1"
-        elif self.provider == "deepseek": target_url = "https://api.deepseek.com"
+        # Prefer explicit base_url (self-hosted gateway/CPA). Only fall back to
+        # provider public endpoints when base_url is not configured.
+        if self.base_url:
+            target_url = self.base_url
+        elif self.provider == "xai":
+            target_url = "https://api.x.ai/v1"
+        elif self.provider == "openrouter":
+            target_url = "https://openrouter.ai/api/v1"
+        elif self.provider == "ollama":
+            target_url = "http://localhost:11434/v1"
+        elif self.provider == "deepseek":
+            target_url = "https://api.deepseek.com"
+        else:
+            target_url = "https://api.openai.com/v1"
 
         print(f"[LLM Client] Init {self.provider} ({self.model}) at {target_url} (Retries=0, Timeout={llm_kwargs['timeout']}s)")
+        llm_kwargs["base_url"] = target_url
 
-        if self.provider == "xai":
-            llm_kwargs["base_url"] = "https://api.x.ai/v1"
+        # api_key precedence: constructor kwargs > provider env > ollama placeholder
+        if "api_key" in self.kwargs and self.kwargs["api_key"]:
+            llm_kwargs["api_key"] = self.kwargs["api_key"]
+        elif self.provider == "xai":
             api_key = os.environ.get("XAI_API_KEY")
-            if api_key: llm_kwargs["api_key"] = api_key
+            if api_key:
+                llm_kwargs["api_key"] = api_key
         elif self.provider == "openrouter":
-            llm_kwargs["base_url"] = "https://openrouter.ai/api/v1"
             api_key = os.environ.get("OPENROUTER_API_KEY")
-            if api_key: llm_kwargs["api_key"] = api_key
-        elif self.provider == "ollama":
-            llm_kwargs["base_url"] = "http://localhost:11434/v1"
-            llm_kwargs["api_key"] = "ollama"
+            if api_key:
+                llm_kwargs["api_key"] = api_key
         elif self.provider == "deepseek":
-            llm_kwargs["base_url"] = self.base_url or "https://api.deepseek.com"
             api_key = os.environ.get("DEEPSEEK_API_KEY")
-            if api_key: llm_kwargs["api_key"] = api_key
-        elif self.base_url:
-            llm_kwargs["base_url"] = self.base_url
+            if api_key:
+                llm_kwargs["api_key"] = api_key
+        elif self.provider == "ollama":
+            llm_kwargs["api_key"] = self.kwargs.get("api_key") or "ollama"
 
-        # Pass remaining keys
-        for key in ("api_key", "callbacks", "reasoning_effort"):
+        # Pass remaining keys (api_key already resolved above, do not overwrite)
+        for key in ("callbacks", "reasoning_effort"):
             if key in self.kwargs:
                 llm_kwargs[key] = self.kwargs[key]
 
